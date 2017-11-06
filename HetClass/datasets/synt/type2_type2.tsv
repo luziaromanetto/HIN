@@ -1,0 +1,9 @@
+0	1	edge_node2type0_node2type1
+0	4	edge_node2type0_node2type4
+1	1	edge_node2type1_node2type1
+1	4	edge_node2type1_node2type4
+2	3	edge_node2type2_node2type3
+2	4	edge_node2type2_node2type4
+3	3	edge_node2type3_node2type3
+3	4	edge_node2type3_node2type4
+4	4	edge_node2type4_node2type4

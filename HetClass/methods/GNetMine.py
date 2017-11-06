@@ -2,8 +2,16 @@ import numpy as np
 import os
 import csv
 
+import HetClass
+from HetClass.models.HetGraph import HetGraph
+
 # -------------------------------------------------------------------- #
 class GNetMine:
+    '''
+    Attributes
+    ----------
+    
+    '''
 # ---------------------------------------------------------------- #
 # Inicialization and auxiliar methods
 # ---------------------------------------------------------------- #    
@@ -15,6 +23,7 @@ class GNetMine:
         self.R = dict()
         self.D = dict()
         self.f = list()
+        self.labels = None
         
     def get_relation_matrix(self, i, j):
         return self.R.get((i,j), None)
@@ -32,12 +41,12 @@ class GNetMine:
     def build_relation_matrix(self):
         # Do grafo pega as dimensoes dos objetos de tipo i e j
         graph = self.graph
-        m = graph.get_m()
+        types = graph.get_types()
 
         # Para todo par de objetos pergunta a ed do grafo de existe uma 
         # aresta entre eles, se sim atribui o valor de 1 na matriz
-        for i in range(m):
-            for j in range(m):
+        for i in types:
+            for j in types:
                 Rij = graph.get_relation_matrix(i,j)
                 if Rij is not None:
                     self.R[(i,j)] = Rij
@@ -64,17 +73,21 @@ class GNetMine:
     # metodo
     # ---------------------------------------------------------------- #
         m = self.graph.get_m()
+        types = self.graph.get_types()
         K = self.graph.get_K()
         self.f = dict()
         self.y = dict()
+        labels = self.graph.get_labels()
 
-        for i in range(m):
+        for i in types:
             ni = self.graph.get_n(i)
             fi = np.zeros( (ni,K) )
 
             for p in range(ni):
-                ci = self.graph.get_c(i,p)
-                if ci != -1:
+                classi = self.graph.get_class(i,p)
+
+                if classi is not None:
+                    ci = labels.index(classi)
                     fi[p,ci] = 1
                     self.y[ (i,p) ] = np.zeros(K)
                     self.y[ (i,p) ][ci] = 1
@@ -83,6 +96,7 @@ class GNetMine:
         
         self.build_relation_matrix()
         self.S = self.build_S()
+        self.labels = labels
 
     def iterate_f(self):
         m = self.graph.get_m()  
@@ -91,9 +105,10 @@ class GNetMine:
         alpha = self.alpha
         gamma = self.gamma
         f = self.f
+        types = self.graph.get_types()
 
         # Iteracao para todos os tipos de objetos
-        for i in range(m):
+        for i in types:
             ni = self.graph.get_n(i)
             f1[i] = np.zeros( (ni,K) )
             over = 0
@@ -114,7 +129,7 @@ class GNetMine:
                 f1[i] += +2*gamma*np.dot(Sii,f[i])
                 over += 2*gamma
 
-            for j in range(m):
+            for j in types:
                 Sij = self.S.get((i,j), None)
                 if Sij is not None:
                     f1[i] = f1[i]+gamma*np.dot(Sij,f[j])
@@ -128,6 +143,7 @@ class GNetMine:
     def run(self, max_it = 100):
         t = 0
         m = self.graph.get_m()
+        types = self.graph.get_types()
 
         # Passo 0
         self.initialize()
@@ -141,8 +157,8 @@ class GNetMine:
 
         self.f = f1
         # Passo 3
-        c = [ None ]*m
-        for i in range(m):
+        c = dict()
+        for i in types:
             ni = self.graph.get_n(i)
             c[i] = [ -1 ]*ni
             
